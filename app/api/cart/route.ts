@@ -1,12 +1,48 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(request: Request) {
-  const { productId, quantity, sessionId } = await request.json()
+  try {
+    const { productId, quantity, sessionId } = await request.json()
 
-  const item = await prisma.cartItem.create({
-    data: { productId, quantity, cart: { connect: { sessionId } } },
-  })
+    if (!productId || !sessionId || !quantity) {
+      return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 })
+    }
 
-  return NextResponse.json(item)
+    // Cek apakah item sudah ada di cart session ini
+    const { data: existing, error: findError } = await supabase
+      .from('cart_items')
+      .select('id, quantity')
+      .eq('session_id', sessionId)
+      .eq('product_id', productId)
+      .maybeSingle()
+
+    if (findError) throw findError
+
+    if (existing) {
+      // Sudah ada -> tambah quantity
+      const { data, error } = await supabase
+        .from('cart_items')
+        .update({ quantity: existing.quantity + quantity })
+        .eq('id', existing.id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return NextResponse.json(data)
+    }
+
+    // Belum ada -> insert baru
+    const { data, error } = await supabase
+      .from('cart_items')
+      .insert({ session_id: sessionId, product_id: productId, quantity })
+      .select()
+      .single()
+
+    if (error) throw error
+    return NextResponse.json(data)
+  } catch (err) {
+    console.error('Cart error:', err)
+    return NextResponse.json({ error: 'Gagal menambah ke cart' }, { status: 500 })
+  }
 }
