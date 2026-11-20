@@ -1,38 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { sendOrderReadyEmail } from '@/lib/email'
 
 type MidtransNotification = {
-  order_id: string
-  status_code: string
-  gross_amount: string
-  signature_key: string
-  transaction_status: string
+  order_id?: string
+  status_code?: string
+  gross_amount?: string
+  signature_key?: string
+  transaction_status?: string
   fraud_status?: string
 }
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as MidtransNotification
+  const serverKey = process.env.MIDTRANS_SERVER_KEY
+  if (!serverKey) {
+    console.error('MIDTRANS_SERVER_KEY belum dikonfigurasi')
+    return NextResponse.json({ error: 'Server payment belum dikonfigurasi' }, { status: 500 })
+  }
+
+  let body: MidtransNotification
+  try {
+    body = (await req.json()) as MidtransNotification
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 })
+  }
 
   const { order_id, status_code, gross_amount, signature_key, transaction_status, fraud_status } = body
 
-  // 1. Verifikasi signature — pastikan notifikasi ini benar dari Midtrans, bukan orang iseng
-  const serverKey = process.env.MIDTRANS_SERVER_KEY!
+  if (!order_id || !status_code || !gross_amount || !signature_key || !transaction_status) {
+    return NextResponse.json({ error: 'Missing required notification fields' }, { status: 400 })
+  }
+
+  // 1. Verifikasi signature — pastikan notifikasi ini benar dari Midtrans
   const expectedSignature = crypto
     .createHash('sha512')
     .update(order_id + status_code + gross_amount + serverKey)
     .digest('hex')
 
-  if (signature_key !== expectedSignature) {
+  const sigBuf = Buffer.from(signature_key)
+  const expectedBuf = Buffer.from(expectedSignature)
+  if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 403 })
   }
 
-  // 2. midtrans_order_id kita simpan sebagai "orderId-timestamp", ambil orderId aslinya
-  const originalOrderId = order_id.split('-').slice(0, 5).join('-')
-  // (UUID Supabase formatnya 5 bagian dipisah dash, jadi ambil 5 bagian pertama)
-
-  // 3. Tentukan payment_status berdasarkan transaction_status dari Midtrans
+  // 2. Tentukan payment_status berdasarkan transaction_status dari Midtrans
   let paymentStatus: string
   if (transaction_status === 'capture') {
     paymentStatus = fraud_status === 'accept' ? 'paid' : 'pending'
@@ -50,7 +61,7 @@ export async function POST(req: NextRequest) {
     paymentStatus = 'unpaid'
   }
 
-  // 4. Update order di database
+  // 3. Update order di database
   const { data: order, error } = await supabaseAdmin
     .from('orders')
     .update({ payment_status: paymentStatus })
@@ -63,7 +74,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Order not found' }, { status: 404 })
   }
 
-  // 5. Kalau baru saja lunas, kirim email konfirmasi pesanan diterima (opsional, boleh disesuaikan)
+  // 4. Kalau baru saja lunas, ubah status pesanan dari pending ke processing
   if (paymentStatus === 'paid' && order.status === 'pending') {
     await supabaseAdmin
       .from('orders')

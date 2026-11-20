@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { NewsletterForm } from './NewsletterForm'
 
 export function Footer() {
   return (
@@ -14,20 +15,7 @@ export function Footer() {
           <p className="text-[#F2F2F0]/60 text-sm mb-6 max-w-md">
             Info menu baru, promo musiman, dan catatan seduh — langsung ke email, tanpa spam.
           </p>
-          <form className="flex flex-col sm:flex-row gap-3 max-w-md">
-            <input
-              type="email"
-              required
-              placeholder="Alamat email"
-              className="flex-1 border border-[#F2F2F0]/20 bg-transparent px-4 py-3 text-sm outline-none focus:border-[#D65A3A] placeholder:text-[#F2F2F0]/40"
-            />
-            <button
-              type="submit"
-              className="bg-[#D65A3A] text-[#F2F2F0] px-6 py-3 text-sm font-medium hover:bg-[#D65A3A]/90 transition-colors"
-            >
-              Berlangganan
-            </button>
-          </form>
+          <NewsletterForm />
         </div>
       </div>
 

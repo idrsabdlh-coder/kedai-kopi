@@ -1,6 +1,7 @@
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function AboutPage() {
   return (
@@ -57,11 +58,13 @@ export default function AboutPage() {
 
       {/* Foto + tim */}
       <section className="grid md:grid-cols-2">
-        <div className="aspect-[4/3] md:aspect-auto overflow-hidden">
-          <img
+        <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[360px] overflow-hidden">
+          <Image
             src="/images/seduhan.avif"
             alt="Proses roasting kopi"
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
           />
         </div>
         <div className="bg-[#232326] flex flex-col justify-center px-6 md:px-12 py-16">
@@ -72,9 +75,9 @@ export default function AboutPage() {
             Cukup dekat untuk memperhatikan detail.
           </h2>
           <p className="text-[#F2F2F0]/70">
-            {/* GANTI dengan nama & peran tim kamu yang sebenarnya */}
-            [Sebutkan nama & peran singkat tim kamu di sini — misalnya siapa
-            yang meracik, siapa yang menjaga kedai sehari-hari.]
+            Kami adalah tim kecil barista dan peracik yang menyeduh setiap pesanan
+            langsung dari bar — mulai dari kalibrasi espresso di pagi hari hingga
+            memastikan setiap cangkir sampai ke mejamu dengan rasa terbaik.
           </p>
         </div>
       </section>
@@ -144,11 +147,13 @@ export default function AboutPage() {
 
       {/* Lokasi - section hijau */}
       <section className="grid md:grid-cols-2 bg-[#93A688] text-[#18181B]">
-        <div className="aspect-[4/3] md:aspect-auto overflow-hidden">
-          <img
+        <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[360px] overflow-hidden">
+          <Image
             src="/images/nongkrong.avif"
             alt="Interior kedai"
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
           />
         </div>
         <div className="flex flex-col justify-center px-6 md:px-12 py-16">

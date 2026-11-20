@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { formatCategoryLabel } from '@/lib/categories'
 
 type Product = {
@@ -24,10 +25,12 @@ export default function ProductCard({ product }: { product: Product }) {
     <Link href={`/product/${product.slug ?? product.id}`} className="group block bg-[#232326] border border-[#F2F2F0]/10">
       <div className="aspect-square overflow-hidden relative">
         {product.image_url ? (
-          <img
+          <Image
             src={product.image_url}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            fill
+            unoptimized
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[#F2F2F0]/30 text-sm bg-[#18181B]">

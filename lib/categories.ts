@@ -2,6 +2,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   coffee: 'Kopi',
   cold: 'Minuman dingin',
   equipment: 'Peralatan',
+  merchandise: 'Merchandise & Hadiah',
 }
 
 export function formatCategoryLabel(cat: string) {

@@ -4,9 +4,13 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { formatCategoryLabel } from '@/lib/categories'
 import Link from 'next/link'
+import Image from 'next/image'
+
+export const dynamic = 'force-dynamic'
 
 type Product = {
   id: string
+  slug?: string
   name: string
   description: string | null
   price: number
@@ -29,7 +33,7 @@ export default async function ShopPage({
 
   if (category) query = query.eq('category', category)
 
-  const { data: products } = await query
+  const { data: products, error: productsError } = await query
 
   const { data: allProducts } = await supabase
     .from('products')
@@ -37,6 +41,7 @@ export default async function ShopPage({
     .eq('is_available', true)
 
   const categories = Array.from(new Set((allProducts ?? []).map((p) => p.category)))
+  const giftHref = categories.includes('merchandise') ? '/shop?category=merchandise' : '/shop'
 
   return (
     <main className="min-h-screen bg-[#18181B] text-[#F2F2F0]">
@@ -85,11 +90,13 @@ export default async function ShopPage({
           )}
         </div>
 
-        <div className="aspect-[4/3] overflow-hidden">
-          <img
+        <div className="relative aspect-[4/3] overflow-hidden">
+          <Image
             src="/images/kopi.avif"
             alt="Produk kedai kopi"
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
           />
         </div>
       </section>
@@ -119,9 +126,11 @@ export default async function ShopPage({
         ) : (
           <div className="py-24 text-center border border-dashed border-[#F2F2F0]/20">
             <p className="text-[#F2F2F0]/60">
-              {category
-                ? `Belum ada menu untuk kategori "${category}".`
-                : 'Belum ada menu. Tambahkan produk dulu lewat Supabase Table Editor.'}
+              {productsError
+                ? 'Menu belum dapat dimuat saat ini karena koneksi database bermasalah.'
+                : category
+                  ? `Belum ada menu untuk kategori "${formatCategoryLabel(category)}".`
+                  : 'Belum ada menu. Tambahkan produk dulu lewat Supabase Table Editor.'}
             </p>
           </div>
         )}
@@ -160,11 +169,13 @@ export default async function ShopPage({
 
       {/* Section gift hijau */}
       <section className="grid md:grid-cols-2 bg-[#93A688] text-[#18181B]">
-        <div className="aspect-[4/3] md:aspect-auto overflow-hidden">
-          <img
+        <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[360px] overflow-hidden">
+          <Image
             src="/images/tempat.avif"
             alt="Kopi dan pastry"
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
           />
         </div>
         <div className="flex flex-col justify-center px-6 md:px-12 py-16">
@@ -179,7 +190,7 @@ export default async function ShopPage({
             dititipkan pesan singkat untuk yang menerima.
           </p>
           <Link
-            href="/shop?category=merchandise"
+            href={giftHref}
             className="inline-block bg-[#18181B] text-[#F2F2F0] px-6 py-3 text-sm w-fit hover:bg-[#18181B]/90 transition-colors"
           >
             Lihat Hadiah

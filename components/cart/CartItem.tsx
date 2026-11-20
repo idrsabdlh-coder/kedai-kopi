@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useCart, type CartItem as CartItemType } from '@/lib/cart-context'
 
 function formatPrice(value: number) {
@@ -17,10 +18,12 @@ export function CartItem({ item }: { item: CartItemType }) {
     <div className="flex gap-4 border-b border-[#F2F2F0]/15 py-5 last:border-b-0">
       <div className="relative h-20 w-20 shrink-0 overflow-hidden bg-[#232326]">
         {item.image_url ? (
-          <img
+          <Image
             src={item.image_url}
             alt={item.name}
-            className="h-full w-full object-cover"
+            fill
+            unoptimized
+            className="object-cover"
           />
         ) : null}
       </div>

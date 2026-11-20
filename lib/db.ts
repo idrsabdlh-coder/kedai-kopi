@@ -22,11 +22,24 @@ export async function getAllProducts(category?: string) {
   return data as Product[]
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function getProductBySlug(slugOrId: string) {
+  if (UUID_REGEX.test(slugOrId)) {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', slugOrId)
+      .maybeSingle()
+
+    if (error) throw error
+    if (data) return data as Product
+  }
+
   const { data, error } = await supabase
     .from('products')
     .select('*')
-    .or(`slug.eq.${slugOrId},id.eq.${slugOrId}`)
+    .eq('slug', slugOrId)
     .maybeSingle()
 
   if (error) throw error
@@ -100,6 +113,8 @@ export type Order = {
 }
 
 export async function getOrderById(id: string) {
+  if (!UUID_REGEX.test(id)) return null
+
   const { data, error } = await supabaseAdmin
     .from('orders')
     .select('*')

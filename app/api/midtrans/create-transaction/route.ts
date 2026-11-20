@@ -3,7 +3,21 @@ import { snap } from '@/lib/midtrans'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function POST(req: NextRequest) {
-  const { orderId } = (await req.json()) as { orderId: string }
+  if (!process.env.MIDTRANS_SERVER_KEY || !process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY) {
+    return NextResponse.json(
+      { error: 'Konfigurasi Midtrans belum diatur di environment (.env.local)' },
+      { status: 500 }
+    )
+  }
+
+  let body: { orderId?: string }
+  try {
+    body = (await req.json()) as { orderId?: string }
+  } catch {
+    return NextResponse.json({ error: 'Format request tidak valid' }, { status: 400 })
+  }
+
+  const { orderId } = body
 
   if (!orderId) {
     return NextResponse.json({ error: 'orderId wajib diisi' }, { status: 400 })
@@ -19,6 +33,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Pesanan tidak ditemukan' }, { status: 404 })
   }
 
+  if (order.payment_status === 'paid') {
+    return NextResponse.json({ error: 'Pesanan ini sudah dibayar' }, { status: 409 })
+  }
+
   // Midtrans order_id harus unik & tidak boleh dipakai ulang untuk transaksi baru
   const midtransOrderId = `${order.id}-${Date.now()}`
 
@@ -26,7 +44,7 @@ export async function POST(req: NextRequest) {
     const transaction = await snap.createTransaction({
       transaction_details: {
         order_id: midtransOrderId,
-        gross_amount: order.total_amount,
+        gross_amount: Math.round(Number(order.total_amount)),
       },
       customer_details: {
         first_name: order.customer_name,
@@ -35,13 +53,23 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from('orders')
       .update({
         midtrans_order_id: midtransOrderId,
         snap_token: transaction.token,
       })
       .eq('id', order.id)
+
+    if (updateError) {
+      // Fallback jika kolom snap_token belum ada di tabel orders
+      const { error: fallbackError } = await supabaseAdmin
+        .from('orders')
+        .update({ midtrans_order_id: midtransOrderId })
+        .eq('id', order.id)
+
+      if (fallbackError) throw fallbackError
+    }
 
     return NextResponse.json({ token: transaction.token })
   } catch (err) {

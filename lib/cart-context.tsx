@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useSyncExternalStore, ReactNode } from 'react'
 
 export type CartItem = {
   id: string
@@ -20,44 +20,72 @@ type CartContextType = {
   totalPrice: number
 }
 
+const STORAGE_KEY = 'cart'
+const EMPTY_CART: CartItem[] = []
+const listeners = new Set<() => void>()
+
+let cachedRaw: string | null = null
+let cachedItems: CartItem[] = EMPTY_CART
+
+function readCartSnapshot(): CartItem[] {
+  if (typeof window === 'undefined') return EMPTY_CART
+  const raw = window.localStorage.getItem(STORAGE_KEY)
+  if (raw === cachedRaw) return cachedItems
+  cachedRaw = raw
+  if (!raw) {
+    cachedItems = EMPTY_CART
+    return cachedItems
+  }
+  try {
+    const parsed = JSON.parse(raw)
+    cachedItems = Array.isArray(parsed) ? parsed : EMPTY_CART
+  } catch {
+    cachedItems = EMPTY_CART
+  }
+  return cachedItems
+}
+
+function getServerSnapshot(): CartItem[] {
+  return EMPTY_CART
+}
+
+function subscribe(callback: () => void) {
+  listeners.add(callback)
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === STORAGE_KEY) callback()
+  }
+  window.addEventListener('storage', onStorage)
+  return () => {
+    listeners.delete(callback)
+    window.removeEventListener('storage', onStorage)
+  }
+}
+
+function writeCart(next: CartItem[]) {
+  const serialized = JSON.stringify(next)
+  cachedRaw = serialized
+  cachedItems = next
+  window.localStorage.setItem(STORAGE_KEY, serialized)
+  listeners.forEach((listener) => listener())
+}
+
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([])
-  const [isLoaded, setIsLoaded] = useState(false)
-
-  useEffect(() => {
-    const saved = localStorage.getItem('cart')
-    if (saved) {
-      try {
-        setItems(JSON.parse(saved))
-      } catch {
-        setItems([])
-      }
-    }
-    setIsLoaded(true)
-  }, [])
-
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('cart', JSON.stringify(items))
-    }
-  }, [items, isLoaded])
+  const items = useSyncExternalStore(subscribe, readCartSnapshot, getServerSnapshot)
 
   function addItem(item: Omit<CartItem, 'quantity'>) {
-    setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id)
-      if (existing) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        )
-      }
-      return [...prev, { ...item, quantity: 1 }]
-    })
+    const current = readCartSnapshot()
+    const existing = current.find((i) => i.id === item.id)
+    const next = existing
+      ? current.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i))
+      : [...current, { ...item, quantity: 1 }]
+    writeCart(next)
   }
 
   function removeItem(id: string) {
-    setItems((prev) => prev.filter((i) => i.id !== id))
+    const current = readCartSnapshot()
+    writeCart(current.filter((i) => i.id !== id))
   }
 
   function updateQuantity(id: string, quantity: number) {
@@ -65,13 +93,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeItem(id)
       return
     }
-    setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, quantity } : i))
-    )
+    const current = readCartSnapshot()
+    writeCart(current.map((i) => (i.id === id ? { ...i, quantity } : i)))
   }
 
   function clearCart() {
-    setItems([])
+    writeCart([])
   }
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0)

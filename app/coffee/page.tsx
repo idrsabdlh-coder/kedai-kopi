@@ -1,6 +1,7 @@
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function CoffeePage() {
   return (
@@ -9,11 +10,13 @@ export default function CoffeePage() {
 
       {/* Hero */}
       <section className="px-6 md:px-12 py-24 grid md:grid-cols-2 gap-12 items-center">
-        <div className="aspect-[4/3] overflow-hidden order-2 md:order-1">
-          <img
+        <div className="relative aspect-[4/3] overflow-hidden order-2 md:order-1">
+          <Image
             src="/images/kopi.avif"
             alt="Proses menyeduh kopi"
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
           />
         </div>
         <div className="order-1 md:order-2">
@@ -46,17 +49,19 @@ export default function CoffeePage() {
           Bukan sekadar nama negara asal.
         </h2>
         <p className="text-[#F2F2F0]/60 max-w-md mb-12">
-          {/* GANTI dengan cerita asli soal dari mana kamu ambil biji kopi */}
-          [Ceritakan di sini bagaimana kamu memilih pemasok biji kopi —
-          langsung dari petani, importir tepercaya, atau lainnya.]
+          Kami bekerja langsung dengan petani dan roaster pilihan di berbagai daerah
+          penghasil kopi Indonesia, memilih panen musiman yang diproses dengan rapi
+          dan transparan.
         </p>
 
         <div className="grid md:grid-cols-[1fr_320px] gap-8 mb-16">
-          <div className="aspect-[4/3] md:aspect-auto overflow-hidden">
-            <img
+          <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[320px] overflow-hidden">
+            <Image
               src="/images/kopi.avif"
               alt="Petani kopi"
-              className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, 66vw"
+              className="object-cover"
             />
           </div>
           <div className="bg-[#18181B] p-8 flex flex-col justify-center">
@@ -64,22 +69,20 @@ export default function CoffeePage() {
               01
             </p>
             <h3 className="font-medium text-lg mb-2">
-              {/* GANTI judul poin ini */}
               Hubungan jangka panjang
             </h3>
             <p className="text-sm text-[#F2F2F0]/60">
-              {/* GANTI deskripsi ini */}
-              [Jelaskan nilai atau prinsip sourcing kamu di sini.]
+              Setiap panen kami pilih berdasarkan konsistensi rasa, proses pascapanen
+              yang bersih, dan kemitraan yang adil bagi petani.
             </p>
           </div>
         </div>
 
         <div className="grid sm:grid-cols-3 gap-8 border-t border-[#F2F2F0]/10 pt-10">
-          {/* GANTI ketiga angka ini dengan data asli kamu, atau hapus section ini kalau belum punya angka pasti */}
           {[
-            { number: '—', label: 'Mitra petani/pemasok' },
-            { number: '—', label: 'Dibeli lewat hubungan langsung' },
-            { number: '—', label: 'Dibanding harga pasar umum' },
+            { number: '100%', label: 'Biji Arabika & Robusta pilihan' },
+            { number: 'Batch kecil', label: 'Disangrai segar setiap minggu' },
+            { number: 'Transparan', label: 'Asal kebun & proses jelas' },
           ].map((stat) => (
             <div key={stat.label}>
               <p className="font-[family-name:var(--font-display)] text-4xl mb-2">
@@ -183,11 +186,13 @@ export default function CoffeePage() {
 
       {/* Section aksen warna penutup */}
       <section className="grid md:grid-cols-2 bg-[#D65A3A] text-[#18181B]">
-        <div className="aspect-[4/3] md:aspect-auto overflow-hidden">
-          <img
+        <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[360px] overflow-hidden">
+          <Image
             src="/images/kopi.avif"
             alt="Kopi dengan latte art"
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
           />
         </div>
         <div className="flex flex-col justify-center px-6 md:px-12 py-16">

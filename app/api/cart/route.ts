@@ -5,8 +5,14 @@ export async function POST(request: Request) {
   try {
     const { productId, quantity, sessionId } = await request.json()
 
-    if (!productId || !sessionId || !quantity) {
-      return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 })
+    if (
+      !productId ||
+      !sessionId ||
+      typeof quantity !== 'number' ||
+      !Number.isInteger(quantity) ||
+      quantity <= 0
+    ) {
+      return NextResponse.json({ error: 'Data tidak lengkap atau tidak valid' }, { status: 400 })
     }
 
     // Cek apakah item sudah ada di cart session ini

@@ -17,11 +17,17 @@ export default function AdminLoginPage() {
     setIsSubmitting(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
         console.error('Login error:', error)
         setError(`Gagal masuk: ${error.message}`)
+        return
+      }
+
+      if (data.user?.user_metadata?.role !== 'admin') {
+        await supabase.auth.signOut()
+        setError('Akun ini tidak memiliki akses admin.')
         return
       }
 
@@ -71,7 +77,7 @@ export default function AdminLoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-[#F2F2F0] text-[#18181B] py-3 text-sm font-medium hover:bg-[#F2F2F0]/90 transition-colors disabled:opacity-60"
+          className="w-full bg-[#F2F2F0] text-[#18181B] py-3 text-sm font-medium hover:bg-[#F2F2F0]/90 transition-colors disabled:opacity-60 cursor-pointer"
         >
           {isSubmitting ? 'Memproses…' : 'Masuk'}
         </button>

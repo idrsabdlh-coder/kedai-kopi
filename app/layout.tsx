@@ -15,8 +15,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Coffee Shop",
-  description: "Coffee shop app",
+  title: "Kedai Kopi",
+  description: "Kopi untuk jam-jam yang berarti — diracik setiap hari dari biji pilihan.",
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="id">
       <body className={`${fraunces.variable} ${inter.variable} font-sans`}>
         <AuthProvider>
           <CartProvider>

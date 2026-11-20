@@ -1,11 +1,22 @@
-import { getAllProducts } from '@/lib/db'
+import { getAllProducts, type Product } from '@/lib/db'
 import ProductCard from '@/components/product/ProductCard'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import Link from 'next/link'
+import Image from 'next/image'
+
+export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  const featured = (await getAllProducts()).slice(0, 4)
+  let featured: Product[] = []
+  let dbError = false
+
+  try {
+    featured = (await getAllProducts()).slice(0, 4)
+  } catch (err) {
+    console.error('Gagal memuat produk unggulan:', err)
+    dbError = true
+  }
 
   return (
     <main className="bg-[#18181B] text-[#F2F2F0]">
@@ -40,10 +51,19 @@ export default async function Home() {
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 border-t border-[#F2F2F0]/10 bg-[#18181B] grid grid-cols-2 md:grid-cols-4 divide-x divide-[#F2F2F0]/10">
-          {['Biji Kopi', 'Minuman Dingin', 'Alat Seduh', 'Kotak Hadiah'].map((label) => (
-            <div key={label} className="text-center py-5 text-sm">
-              {label}
-            </div>
+          {[
+            { label: 'Biji Kopi', href: '/shop?category=coffee' },
+            { label: 'Minuman Dingin', href: '/shop?category=cold' },
+            { label: 'Alat Seduh', href: '/shop?category=equipment' },
+            { label: 'Kotak Hadiah', href: '/shop' },
+          ].map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="text-center py-5 text-sm hover:text-[#D65A3A] transition-colors"
+            >
+              {item.label}
+            </Link>
           ))}
         </div>
       </section>
@@ -63,19 +83,31 @@ export default async function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featured.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {featured.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featured.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <div className="py-16 text-center border border-dashed border-[#F2F2F0]/20">
+            <p className="text-[#F2F2F0]/60 text-sm">
+              {dbError
+                ? 'Menu belum dapat dimuat saat ini karena koneksi database bermasalah.'
+                : 'Belum ada menu tersedia saat ini.'}
+            </p>
+          </div>
+        )}
       </section>
 
       <section className="px-6 md:px-12 py-24 grid md:grid-cols-2 gap-12 items-center bg-[#232326]">
-        <div className="aspect-[4/3] overflow-hidden">
-          <img
+        <div className="relative aspect-[4/3] overflow-hidden">
+          <Image
             src="/images/seduhan.avif"
             alt="Proses menyeduh kopi"
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
           />
         </div>
         <div>
@@ -145,11 +177,13 @@ export default async function Home() {
       </section>
 
       <section className="grid md:grid-cols-2 bg-[#8CA085] text-[#18181B]">
-        <div className="aspect-[4/3] md:aspect-auto">
-          <img
+        <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[360px]">
+          <Image
             src="/images/tempat.avif"
             alt="Interior kedai"
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
           />
         </div>
         <div className="flex flex-col justify-center px-6 md:px-12 py-16">
