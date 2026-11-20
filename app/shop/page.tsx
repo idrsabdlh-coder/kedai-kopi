@@ -33,12 +33,10 @@ export default async function ShopPage({
 
   if (category) query = query.eq('category', category)
 
-  const { data: products, error: productsError } = await query
-
-  const { data: allProducts } = await supabase
-    .from('products')
-    .select('category')
-    .eq('is_available', true)
+  const [{ data: products, error: productsError }, { data: allProducts }] = await Promise.all([
+    query,
+    supabase.from('products').select('category').eq('is_available', true),
+  ])
 
   const categories = Array.from(new Set((allProducts ?? []).map((p) => p.category)))
   const giftHref = categories.includes('merchandise') ? '/shop?category=merchandise' : '/shop'
